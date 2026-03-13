@@ -1,0 +1,19 @@
+React Native: встановлення та налаштування
+Загальна ідея React Native (RN) - універсальний інструмент створення застосунків під різні платформи
+(Android, iOS, Windows, MacOS, Linux, Browser)
+Принцип роботи - транскодер, переведення універсального коду JS/RN до native-коду конкретної
+платформи; для роботи RN необхідні також інструменти даної платформи.
+Головна мета - Android - ОС побудована на С та Java
+Процес компіляції RN: TS/TSX -> Java (JDK) -> Android SDK -> APK -> Встановлення на пристрій
+Інструментарій:      VS Code     JDK-17      Android Studio          Emulator (як частина Android Studio)
+                                         Бажано вказати для SDK      або окрема програма-емулятор BlueStacks
+                                          шлях C:/Android/SDK
+	                                 або створитит системну змінну 
+                                         ANDROID_HOME з шляхом до SDK: C:/users/USER/AppData/Local/Android/SDK
+
+Ресурси:
+https://www.oracle.com/java/technologies/javase/jdk17-archive-downloads.html
+https://developer.android.com/studio
+
+Попередні налаштування:
+включена віртуалізація у BIOS
