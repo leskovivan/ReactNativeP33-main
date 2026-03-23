@@ -4,35 +4,37 @@ import Colors from "../../../features/config/Colors";
 const HomeStyle = StyleSheet.create({
     pageContainer: {
         flex: 1,
-        padding: 10,
+        display: "flex",
+        flexDirection: "column",
+        width: "100%",
     },
     pageTitle: {
-        fontSize: 24,
-        fontWeight: 'bold',
-        marginBottom: 20,
         color: Colors.primaryTextColor,
+        fontWeight: 600,
+        textAlign: "center",
+        fontSize: 20.0,
+        marginVertical: 10.0,
     },
-    itemsContainer: {
-        flexDirection: 'row',
-        flexWrap: 'wrap',
-        justifyContent: 'space-between',
+    navItem: {
+        borderWidth: 1.0,
+        borderColor: Colors.primaryTextColor,
+        borderRadius: 5.0,
+        marginHorizontal: 20.0,
+        marginVertical: 10.0,
+        padding: 10.0,
+        display: "flex",
+        flexDirection: "row",
+        alignItems: "center",
     },
-    itemWrapper: {
-        width: '48%', // Approx 2 columns
-        marginBottom: 20,
+    navImage: {
+        tintColor: Colors.primaryTextColor,
+        width: 50.0,
+        height: 50.0,
+        marginRight: 10.0,
     },
-    itemSquare: {
-        width: '100%',
-        aspectRatio: 1, // Keep it square
-        backgroundColor: 'rgba(255, 255, 255, 0.2)', // Semi-transparent
-        borderRadius: 8,
-        marginBottom: 8,
-    },
-    itemTextPlaceholder: {
-        width: '80%',
-        height: 16,
-        backgroundColor: 'rgba(255, 255, 255, 0.2)', // Semi-transparent
-        borderRadius: 4,
+    navText: {
+        color: Colors.primaryTextColor,
+        fontSize: 18.0,
     }
 });
 

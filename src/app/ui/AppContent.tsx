@@ -1,16 +1,19 @@
-import { BackHandler, Image, Text, TouchableOpacity, View } from "react-native";
+import { BackHandler, Image, Text, TouchableOpacity, useWindowDimensions, View } from "react-native";
 import AppContentStyle from "./AppContentStyle";
 import Home from "../../pages/home/Home";
 import { useEffect, useState } from "react";
 import IRoute from "../../features/model/IRoute";
 import Calc from "../../pages/calc/Calc";
-import NotFound from "../../pages/notfound/NotFound";
+import { AppContext } from "../../features/context/AppContext";
+import Rate from "../../pages/rate/Rate";
+import Anim from "../../pages/anim/Anim";
 
 const startPage:IRoute = {
     slug: 'home',
 };
 
 export default function AppContent() {
+    const {width, height} = useWindowDimensions();
     const [history, setHistory] = useState<Array<IRoute>>([]);
     const [page, setPage] = useState<IRoute>(startPage);
 
@@ -36,6 +39,7 @@ export default function AppContent() {
     };
 
     useEffect(() => {
+        console.log(history);
         const handler = BackHandler.addEventListener(
             'hardwareBackPress', () => {
                 // console.log("back press");
@@ -45,40 +49,55 @@ export default function AppContent() {
         return () => handler.remove();    
     }, [history]);
 
-    useEffect(() => {console.log(history)}, [history]);
-
-    return <View style={AppContentStyle.container}>
-        <View style={AppContentStyle.topBar}>
-            <TouchableOpacity onPress={() => navigate({slug: '-1'})}>
-                <Text style={AppContentStyle.topBarBack}>
-                    〈
-                </Text>    
-            </TouchableOpacity>
-            <Text style={AppContentStyle.topBarTitle}>Mobile-P33</Text>
-            <View style={AppContentStyle.topBarIcon}></View>
-        </View>
-
-        <View style={AppContentStyle.pageWidget}>
-            { page.slug == "home" ? <Home />
-            : page.slug == "calc" ? <Calc />
-            : <NotFound />
+    return <AppContext.Provider value={{navigate}}>
+        <View style={AppContentStyle.container}>
+            { width < height && 
+                <View style={AppContentStyle.topBar}>
+                    <TouchableOpacity onPress={() => navigate({slug: '-1'})}>
+                        <Text style={AppContentStyle.topBarBack}>
+                            〈
+                        </Text>    
+                    </TouchableOpacity>
+                    <Text style={AppContentStyle.topBarTitle}>Mobile-P33</Text>
+                    <View style={AppContentStyle.topBarIcon}></View>
+                </View>
             }
-        </View>        
 
-        <View style={AppContentStyle.bottomBar}>
-            <TouchableOpacity onPress={() => navigate({slug: 'home'})}>
-                <Image style={AppContentStyle.bottomBarIcon} 
-                    source={require('../asset/home.png')}/>
-            </TouchableOpacity>
-            <TouchableOpacity onPress={() => navigate({slug: 'calc'})}>
-                <Image style={AppContentStyle.bottomBarIcon} 
-                    source={require('../asset/calc.png')}/>
-            </TouchableOpacity>
-            <TouchableOpacity onPress={() => navigate({slug: 'non-existent'})}>
-                 <Text style={{fontSize: 30, color: '#f1f1f1', marginHorizontal: 10}}>?</Text>
-            </TouchableOpacity>
+            <View style={AppContentStyle.pageWidget}>
+                { page.slug == "home" ? <Home />
+                : page.slug == "anim" ? <Anim />
+                : page.slug == "calc" ? <Calc />
+                : page.slug == "rate" ? <Rate />
+                : <Text>Not Found</Text>
+                }
+            </View>
+
+            { width < height && 
+                <View style={AppContentStyle.bottomBar}>
+                    <TouchableOpacity onPress={() => navigate({slug: 'home'})}>
+                        <Image style={AppContentStyle.bottomBarIcon} 
+                            source={require('../../features/asset/home.png')}/>
+                    </TouchableOpacity>
+                    <TouchableOpacity onPress={() => navigate({slug: 'calc'})}>
+                        <Image style={AppContentStyle.bottomBarIcon} 
+                            source={require('../../features/asset/calc.png')}/>
+                    </TouchableOpacity>
+                    <TouchableOpacity onPress={() => navigate({slug: 'rate'})}>
+                        <Image style={AppContentStyle.bottomBarIcon} 
+                            source={require('../../features/asset/rate.png')}/>
+                    </TouchableOpacity>
+                    <TouchableOpacity onPress={() => navigate({slug: 'anim'})}>
+                        <Image style={AppContentStyle.bottomBarIcon} 
+                            source={require('../../features/asset/calc.png')}/>
+                    </TouchableOpacity>
+                    <TouchableOpacity onPress={() => navigate({slug: 'home'})}>
+                        <Image style={AppContentStyle.bottomBarIcon} 
+                            source={require('../../features/asset/home.png')}/>
+                    </TouchableOpacity>
+                </View>
+            }
         </View>
-    </View>;
+    </AppContext.Provider>;
 }
 /*
 Д.З. Створити сторінку "404", додати кнопку меню, що імітує

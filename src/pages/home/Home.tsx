@@ -1,21 +1,42 @@
-import { ScrollView, Text, View } from "react-native";
+import { Image, Text, TouchableOpacity, View } from "react-native";
 import HomeStyle from "./ui/HomeStyle";
+import { useContext } from "react";
+import { AppContext } from "../../features/context/AppContext";
 
 export default function Home() {
-    const skeletonItems = Array.from({ length: 6 }); // Generate 6 placeholder items
+    const {navigate} = useContext(AppContext);
 
-    return (
-        <View style={HomeStyle.pageContainer}>
-            <Text style={HomeStyle.pageTitle}>Hello, World!</Text>
+    return <View style={HomeStyle.pageContainer}>
+        <Text style={HomeStyle.pageTitle}>React Native</Text>
 
-            <ScrollView contentContainerStyle={HomeStyle.itemsContainer}>
-                {skeletonItems.map((_, index) => (
-                    <View key={index} style={HomeStyle.itemWrapper}>
-                        <View style={HomeStyle.itemSquare} />
-                        <View style={HomeStyle.itemTextPlaceholder} />
-                    </View>
-                ))}
-            </ScrollView>
-        </View>
-    );
+        <TouchableOpacity 
+            style={HomeStyle.navItem} 
+            onPress={() => navigate({slug: 'calc'})}>
+            <Image 
+                source={require('../../features/asset/calc.png')}
+                style={HomeStyle.navImage}/>
+            <Text 
+                style={HomeStyle.navText}>Калькулятор</Text>
+        </TouchableOpacity>
+
+        <TouchableOpacity 
+            style={HomeStyle.navItem} 
+            onPress={() => navigate({slug: 'rate'})}>
+            <Image 
+                source={require('../../features/asset/rate.png')}
+                style={HomeStyle.navImage}/>
+            <Text 
+                style={HomeStyle.navText}>Курс валют НБУ</Text>
+        </TouchableOpacity>
+
+        <TouchableOpacity 
+            style={HomeStyle.navItem} 
+            onPress={() => navigate({slug: 'anim'})}>
+            <Image 
+                source={require('../../features/asset/rate.png')}
+                style={HomeStyle.navImage}/>
+            <Text 
+                style={HomeStyle.navText}>Анімації</Text>
+        </TouchableOpacity>
+    </View>;
 }

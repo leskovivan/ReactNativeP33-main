@@ -1,37 +1,13 @@
-import { Text, View } from "react-native";
+import { Text, useWindowDimensions, View } from "react-native";
 import CalcStyle from "./ui/CalcStyle";
 import CalcButton from "./ui/CalcButton";
 import { CalcButtonTypes } from "./model/CalcButtonTypes";
 import { useState } from "react";
 import { CalcOperations } from "./model/CalcOperations";
-import MemoryButton from "./ui/MemoryButton";
-import { MemoryButtonTypes } from "./model/MemoryButtonTypes";
 
 const maxDigits = 20;
 const dotSymbol = ",";
 const minusSymbol = "\u2212";
-const spaceSymbol = "\u2009";
-
-const cleanString = (str: string): string => {
-    return str.split(spaceSymbol).join('');
-};
-
-const countDigits = (str: string): number => {
-    return str.replace(/[^0-9]/g, '').length;
-};
-
-const formatNumber = (str: string): string => {
-    let isNegative = str.startsWith(minusSymbol);
-    let workingStr = isNegative ? str.substring(minusSymbol.length) : str;
-    
-    let parts = workingStr.split(dotSymbol);
-    let integerPart = parts[0];
-    let fractionPart = parts.length > 1 ? dotSymbol + parts[1] : "";
-    
-    let formattedInteger = integerPart.replace(/\B(?=(\d{3})+(?!\d))/g, spaceSymbol);
-    
-    return (isNegative ? minusSymbol : "") + formattedInteger + fractionPart;
-};
 
 interface ICalcState {
     expression: string,
@@ -52,6 +28,10 @@ const initCalcState:ICalcState = {
 export default function Calc() {
     const [calcState, setCalcState] = useState<ICalcState>(initCalcState);
 
+    // врахування конфігурації: поворот екрану (орієнтація пристрою)
+    const {width, height} = useWindowDimensions();
+
+    // #region Functions
     const equalClick = () => {
         if(!calcState.operation) return;
         setCalcState({...calcState,
@@ -60,6 +40,7 @@ export default function Calc() {
               : calcState.operation == CalcOperations.sub ? calcState.prevArgument! - resToNum(calcState.result)
               : calcState.operation == CalcOperations.mul ? calcState.prevArgument! * resToNum(calcState.result)
               : calcState.operation == CalcOperations.div ? calcState.prevArgument! / resToNum(calcState.result)
+              : calcState.operation == CalcOperations.percent ? (calcState.prevArgument! * resToNum(calcState.result)) / 100.0
               : NaN
             ),
             expression: `${calcState.expression} ${calcState.result} =`,
@@ -77,23 +58,30 @@ export default function Calc() {
             isNeedClearEntry: true,
         })
     };
-
+    
     const resToNum = (res:string):number => { 
-        return Number(cleanString(res)
+        return Number(res
             .replace(dotSymbol, '.')
             .replace(minusSymbol, '-')
         );
     };
 
     const numToRes = (num:number):string => {
-        let str = num.toString()
+        return num.toString()
             .replace('.', dotSymbol)
             .replace('-', minusSymbol);
-        return formatNumber(str);
     };
 
     const invClick = () => {
         let arg = resToNum(calcState.result);
+        if(arg == 0) {
+            setCalcState({...calcState,
+                expression: `1 / 0 = Error`,
+                result: "Error",
+                isNeedClear: true
+            });
+            return;
+        }
         arg = 1.0 / arg;
         setCalcState({...calcState,
             result: numToRes(arg),
@@ -102,47 +90,60 @@ export default function Calc() {
         });
     };
 
-    const sqrClick = () => {
+    const trigClick = (func: 'sin' | 'cos' | 'tan' | 'ctg') => {
         let arg = resToNum(calcState.result);
-        let res = arg * arg;
-        setCalcState({
-            ...calcState,
-            result: numToRes(res),
-            expression: `${calcState.result}² =`,
-            isNeedClear: true
-        });
-    };
+        if (isNaN(arg)) return;
 
-    const sqrtClick = () => {
-        let arg = resToNum(calcState.result);
-        if (arg < 0) {
-            setCalcState({
-                ...calcState,
-                result: "Invalid Input",
-                expression: `√(${calcState.result})`,
+        // Check for undefined values for tan and ctg (arguments in degrees)
+        if (func === 'tan' && (Math.abs(arg) % 180 === 90)) {
+             setCalcState({...calcState,
+                result: "Error",
+                expression: `${func}(${calcState.result}) = Error`,
                 isNeedClear: true
             });
             return;
         }
-        let res = Math.sqrt(arg);
-        setCalcState({
-            ...calcState,
+        if (func === 'ctg' && (Math.abs(arg) % 180 === 0)) {
+             setCalcState({...calcState,
+                result: "Error",
+                expression: `${func}(${calcState.result}) = Error`,
+                isNeedClear: true
+            });
+            return;
+        }
+
+        let rad = arg * Math.PI / 180.0;
+        let res = NaN;
+
+        if (func === 'sin') res = Math.sin(rad);
+        else if (func === 'cos') res = Math.cos(rad);
+        else if (func === 'tan') res = Math.tan(rad);
+        else if (func === 'ctg') res = 1.0 / Math.tan(rad);
+        
+        // Rounding to fix precision issues (e.g. sin(30) = 0.5)
+        if (Math.abs(res) < 1e-14) res = 0;
+        if (Math.abs(res - 1) < 1e-14) res = 1;
+        if (Math.abs(res + 1) < 1e-14) res = -1;
+        if (Math.abs(res - 0.5) < 1e-14) res = 0.5;
+        if (Math.abs(res + 0.5) < 1e-14) res = -0.5;
+
+        setCalcState({...calcState,
             result: numToRes(res),
-            expression: `√(${calcState.result}) =`,
+            expression: `${func}(${calcState.result}) =`,
             isNeedClear: true
         });
     };
 
     const digitClick = (text:string) => {
-        let res = calcState.isNeedClear || calcState.isNeedClearEntry ? "" : cleanString(calcState.result);
-        if(res == '0') {
+        let res = calcState.result;
+        if(res == '0' || calcState.isNeedClear || calcState.isNeedClearEntry) {
             res = '';
         }
-        if(countDigits(res) < maxDigits) {
+        if(res.length < maxDigits + (res.includes(dotSymbol) ? 1 : 0)) {
             res += text;
         }
         setCalcState({...calcState,
-            result: formatNumber(res),
+            result: res,
             expression: calcState.isNeedClear ? "" : calcState.expression,
             isNeedClear: false,
             isNeedClearEntry: false,
@@ -160,79 +161,74 @@ export default function Calc() {
     };
 
     const backspaceClick = () => {
-        let clean = cleanString(calcState.result);
-        if (clean.length <= 1) {
-            setCalcState({...calcState, result: "0"});
-            return;
-        }
-        let res = clean.substring(0, clean.length - 1);
-        if(res == minusSymbol || res == "") {
+        // відкорегувати на залишок символа "-" (він не повинен залишатись сам)
+        let len = calcState.result.length;
+        let res = len > 1 ? calcState.result.substring(0, len - 1) : "0";
+        if(res == minusSymbol) {
             res = '0';
         }
         setCalcState({...calcState,
-            result: formatNumber(res),
+            result: res,
        });
     }
 
     const dotClick = (text:string) => {   // десятична точка: додається в кінець АЛЕ якщо її немає раніше
-        let clean = "";
-        if(calcState.isNeedClear || calcState.isNeedClearEntry) {
-            clean = "0";
-        } else {
-            clean = cleanString(calcState.result);
+        if(!calcState.result.includes(text)) {
+            setCalcState({...calcState,
+                result: calcState.isNeedClear || calcState.isNeedClearEntry
+                    ? "0" + text
+                    : calcState.result + text,
+                expression: calcState.isNeedClear ? "" : calcState.expression,
+                isNeedClear: false,
+                isNeedClearEntry: false,
+            });
         }
-
-        if(!clean.includes(text)) {
-            clean += text;
-        }
-        
-        setCalcState({...calcState,
-            result: formatNumber(clean),
-            isNeedClear: false,
-            isNeedClearEntry: false
-        });
     };
 
     const pmClick = () => {   // зміна знаку: додається "-" до початку числа, якщо його немає, інакше прибирається
-        let clean = cleanString(calcState.result);
-        if(clean == '0') return;
-        
-        let res = clean.startsWith(minusSymbol)
-        ? clean.substring(minusSymbol.length)
-        : minusSymbol + clean;
+        if(calcState.result == '0') return;
+        if(calcState.isNeedClear) {
+            clearClick();
+            return;
+        }
+        if(calcState.isNeedClearEntry) {
+            clearEntryClick();
+            return;
+        }
+        let res = calcState.result.startsWith(minusSymbol)
+        ? calcState.result.substring(1)
+        : minusSymbol + calcState.result;
 
         setCalcState({...calcState,
-            result: formatNumber(res),
+            result: res,
         });
     };
-
+    // #endregion
+    
     const resultFontSize = calcState.result.length <= 11 ? 60.0 : 660.0 / calcState.result.length;
 
-    return <View style={CalcStyle.pageContainer}>
-        <Text style={CalcStyle.pageTitle}>Calculator</Text>
-        <Text style={CalcStyle.expression}>{calcState.expression}</Text>
-        <Text style={[CalcStyle.result, {fontSize: resultFontSize}]}>{calcState.result}</Text>
-        <View style={CalcStyle.memoryRow}>
-            {/* MC MR M+ M- MS Mv */}
-            <MemoryButton text="MC" type={MemoryButtonTypes.disabled} />
-            <MemoryButton text="MR" type={MemoryButtonTypes.disabled} />
-            <MemoryButton text="M+" type={MemoryButtonTypes.enabled} />
-            <MemoryButton text="M-" type={MemoryButtonTypes.enabled} />
-            <MemoryButton text="MS" type={MemoryButtonTypes.enabled} />
-            <MemoryButton text="Mv" type={MemoryButtonTypes.disabled} />
-        </View>
+    // розмітка при вертикальному положенні пристрою
+    const PortraitView = () => <View style={CalcStyle.pageContainer}>
+        <View style={CalcStyle.display}>
+            <Text style={CalcStyle.pageTitle}>Calculator</Text>
+            <Text style={CalcStyle.expression}>{calcState.expression}</Text>
+            <Text style={[CalcStyle.result, {fontSize: resultFontSize}]}>{calcState.result}</Text>
+        </View>    
 
         <View style={CalcStyle.keyboard}>
+            <View style={CalcStyle.memoryRow}>
+                <Text>Memory buttons</Text>
+            </View>
             <View style={CalcStyle.buttonsRow}>
-                <CalcButton text="%" onPress={() => console.log("Press")}/>
+                <CalcButton text="%" onPress={() => operButtonClick(CalcOperations.percent, '%')}/>
                 <CalcButton text="CE" onPress={clearEntryClick} />
                 <CalcButton text="C" onPress={clearClick} />
                 <CalcButton text={"\u232B"} onPress={backspaceClick}/>
             </View>
              <View style={CalcStyle.buttonsRow}>
                 <CalcButton text={"\u00b9/\u2093"} onPress={invClick}/>
-                <CalcButton text={"x\u00b2"} onPress={sqrClick} />
-                <CalcButton text={"\u00B2\u221ax\u0305"} onPress={sqrtClick} />
+                <CalcButton text={"x\u00b2"} />
+                <CalcButton text={"\u00B2\u221ax\u0305"} />
                 <CalcButton text={"\u00F7"} onPress={(face) => operButtonClick(CalcOperations.div, face)} />
             </View>
              <View style={CalcStyle.buttonsRow}>
@@ -260,8 +256,64 @@ export default function Calc() {
                 <CalcButton text={"\uFF1D"} buttonType={CalcButtonTypes.equal} onPress={equalClick} />
             </View>
         </View>
+    </View>; 
+
+    // розмітка при горизонтальному положенні пристрою
+    const LandscapeView = () => <View style={CalcStyle.pageContainer}>
+        <View style={CalcStyle.displayLand}>
+            <View style={CalcStyle.displayLeftLand}>
+                <Text style={CalcStyle.pageTitle}>Calculator</Text>
+                <Text style={CalcStyle.expression}>{calcState.expression}</Text>
+                <View style={CalcStyle.memoryRow}>
+                    <Text>Memory buttons</Text>
+                </View>
+            </View>
+            <Text style={[CalcStyle.resultLand, {fontSize: resultFontSize}]}>{calcState.result}</Text>
+        </View>
+
+        <View style={CalcStyle.keyboardLand}>
+            <View style={CalcStyle.buttonsRowLand}>
+                <CalcButton text="sin" onPress={() => trigClick('sin')} />
+                <CalcButton text="%" onPress={() => operButtonClick(CalcOperations.percent, '%')}/>
+                <CalcButton text="7" buttonType={CalcButtonTypes.digit} onPress={digitClick} />
+                <CalcButton text="8" buttonType={CalcButtonTypes.digit} onPress={digitClick} />
+                <CalcButton text="9" buttonType={CalcButtonTypes.digit} onPress={digitClick} />
+                <CalcButton text={"\u00F7"} onPress={(face) => operButtonClick(CalcOperations.div, face)} />
+                <CalcButton text="C" onPress={clearClick} />
+            </View>
+            <View style={CalcStyle.buttonsRowLand}>
+                <CalcButton text="cos" onPress={() => trigClick('cos')} />
+                <CalcButton text={"\u00b9/\u2093"} onPress={invClick}/>
+                <CalcButton text="4" buttonType={CalcButtonTypes.digit} onPress={digitClick} />
+                <CalcButton text="5" buttonType={CalcButtonTypes.digit} onPress={digitClick} />
+                <CalcButton text="6" buttonType={CalcButtonTypes.digit} onPress={digitClick} />
+                <CalcButton text={"\u00D7"} onPress={(face) => operButtonClick(CalcOperations.mul, face)}/>
+                <CalcButton text="CE" onPress={clearEntryClick} />
+            </View>
+            <View style={CalcStyle.buttonsRowLand}>
+                <CalcButton text="tan" onPress={() => trigClick('tan')} />
+                <CalcButton text={"x\u00b2"} />
+                <CalcButton text="1" buttonType={CalcButtonTypes.digit} onPress={digitClick} />
+                <CalcButton text="2" buttonType={CalcButtonTypes.digit} onPress={digitClick} />
+                <CalcButton text="3" buttonType={CalcButtonTypes.digit} onPress={digitClick} />
+                <CalcButton text={"\u2212"} onPress={(face) => operButtonClick(CalcOperations.sub, face)} />
+                <CalcButton text={"\u232B"} onPress={backspaceClick}/>
+            </View>
+            <View style={CalcStyle.buttonsRowLand}>
+                <CalcButton text="ctg" onPress={() => trigClick('ctg')} />
+                <CalcButton text={"\u00B2\u221ax\u0305"} />
+                <CalcButton text={"\u207a\u2215\u208b"} buttonType={CalcButtonTypes.digit} onPress={pmClick} />
+                <CalcButton text="0" buttonType={CalcButtonTypes.digit} onPress={digitClick} />
+                <CalcButton text={dotSymbol} buttonType={CalcButtonTypes.digit} onPress={dotClick}/>
+                <CalcButton text={"\uFF0B"} onPress={(face) => operButtonClick(CalcOperations.add, face)}/>
+                <CalcButton text={"\uFF1D"} buttonType={CalcButtonTypes.equal} onPress={equalClick} />
+            </View>
+        </View>
     </View>;
+
+    return width < height ? PortraitView() : LandscapeView();
 }
+
 /*
 Д.З. Врахувати в обмеженні на кількість цифр на дисплеї
 той факт, що знак числа ("-") не належить до цифр. 
@@ -281,4 +333,10 @@ str.substring(3,7) - "lo, "
 піднесення до квадрату
 корень з числа (з перевіркою на додатню величину)
 Додавати скріншоти
+
+Д.З. Завершити роботу з проєктом "Калькулятор"
+- кнопки тригонометрії в ландшафтній орієнтації та їх робота
+   (у т.ч. контроль аргументів: tan / ctg визначені не для усіх значень)
+- кнопка "%" - обчислення проценту від числа
+   [20] "%" [500] "=" (100)    -- 20% від 500   
 */
