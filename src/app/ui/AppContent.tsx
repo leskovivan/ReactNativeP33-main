@@ -7,6 +7,7 @@ import Calc from "../../pages/calc/Calc";
 import { AppContext } from "../../features/context/AppContext";
 import Rate from "../../pages/rate/Rate";
 import Anim from "../../pages/anim/Anim";
+import Swipe from "../../pages/swipe/Swipe";
 
 const startPage:IRoute = {
     slug: 'home',
@@ -64,10 +65,11 @@ export default function AppContent() {
             }
 
             <View style={AppContentStyle.pageWidget}>
-                { page.slug == "home" ? <Home />
-                : page.slug == "anim" ? <Anim />
-                : page.slug == "calc" ? <Calc />
-                : page.slug == "rate" ? <Rate />
+                { page.slug == "home"  ? <Home />
+                : page.slug == "anim"  ? <Anim />
+                : page.slug == "calc"  ? <Calc />
+                : page.slug == "rate"  ? <Rate />
+                : page.slug == "swipe" ? <Swipe />
                 : <Text>Not Found</Text>
                 }
             </View>
@@ -90,9 +92,9 @@ export default function AppContent() {
                         <Image style={AppContentStyle.bottomBarIcon} 
                             source={require('../../features/asset/calc.png')}/>
                     </TouchableOpacity>
-                    <TouchableOpacity onPress={() => navigate({slug: 'home'})}>
+                    <TouchableOpacity onPress={() => navigate({slug: 'swipe'})}>
                         <Image style={AppContentStyle.bottomBarIcon} 
-                            source={require('../../features/asset/home.png')}/>
+                            source={require('../../features/asset/swipe.png')}/>
                     </TouchableOpacity>
                 </View>
             }

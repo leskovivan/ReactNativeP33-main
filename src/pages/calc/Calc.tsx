@@ -40,7 +40,6 @@ export default function Calc() {
               : calcState.operation == CalcOperations.sub ? calcState.prevArgument! - resToNum(calcState.result)
               : calcState.operation == CalcOperations.mul ? calcState.prevArgument! * resToNum(calcState.result)
               : calcState.operation == CalcOperations.div ? calcState.prevArgument! / resToNum(calcState.result)
-              : calcState.operation == CalcOperations.percent ? (calcState.prevArgument! * resToNum(calcState.result)) / 100.0
               : NaN
             ),
             expression: `${calcState.expression} ${calcState.result} =`,
@@ -74,62 +73,10 @@ export default function Calc() {
 
     const invClick = () => {
         let arg = resToNum(calcState.result);
-        if(arg == 0) {
-            setCalcState({...calcState,
-                expression: `1 / 0 = Error`,
-                result: "Error",
-                isNeedClear: true
-            });
-            return;
-        }
         arg = 1.0 / arg;
         setCalcState({...calcState,
             result: numToRes(arg),
             expression: `1 / ${calcState.result} =`,
-            isNeedClear: true
-        });
-    };
-
-    const trigClick = (func: 'sin' | 'cos' | 'tan' | 'ctg') => {
-        let arg = resToNum(calcState.result);
-        if (isNaN(arg)) return;
-
-        // Check for undefined values for tan and ctg (arguments in degrees)
-        if (func === 'tan' && (Math.abs(arg) % 180 === 90)) {
-             setCalcState({...calcState,
-                result: "Error",
-                expression: `${func}(${calcState.result}) = Error`,
-                isNeedClear: true
-            });
-            return;
-        }
-        if (func === 'ctg' && (Math.abs(arg) % 180 === 0)) {
-             setCalcState({...calcState,
-                result: "Error",
-                expression: `${func}(${calcState.result}) = Error`,
-                isNeedClear: true
-            });
-            return;
-        }
-
-        let rad = arg * Math.PI / 180.0;
-        let res = NaN;
-
-        if (func === 'sin') res = Math.sin(rad);
-        else if (func === 'cos') res = Math.cos(rad);
-        else if (func === 'tan') res = Math.tan(rad);
-        else if (func === 'ctg') res = 1.0 / Math.tan(rad);
-        
-        // Rounding to fix precision issues (e.g. sin(30) = 0.5)
-        if (Math.abs(res) < 1e-14) res = 0;
-        if (Math.abs(res - 1) < 1e-14) res = 1;
-        if (Math.abs(res + 1) < 1e-14) res = -1;
-        if (Math.abs(res - 0.5) < 1e-14) res = 0.5;
-        if (Math.abs(res + 0.5) < 1e-14) res = -0.5;
-
-        setCalcState({...calcState,
-            result: numToRes(res),
-            expression: `${func}(${calcState.result}) =`,
             isNeedClear: true
         });
     };
@@ -220,7 +167,7 @@ export default function Calc() {
                 <Text>Memory buttons</Text>
             </View>
             <View style={CalcStyle.buttonsRow}>
-                <CalcButton text="%" onPress={() => operButtonClick(CalcOperations.percent, '%')}/>
+                <CalcButton text="%" onPress={() => console.log("Press")}/>
                 <CalcButton text="CE" onPress={clearEntryClick} />
                 <CalcButton text="C" onPress={clearClick} />
                 <CalcButton text={"\u232B"} onPress={backspaceClick}/>
@@ -263,7 +210,7 @@ export default function Calc() {
         <View style={CalcStyle.displayLand}>
             <View style={CalcStyle.displayLeftLand}>
                 <Text style={CalcStyle.pageTitle}>Calculator</Text>
-                <Text style={CalcStyle.expression}>{calcState.expression}</Text>
+                <Text style={CalcStyle.expression}>{calcState.expression}{Math.cos(1)}</Text>
                 <View style={CalcStyle.memoryRow}>
                     <Text>Memory buttons</Text>
                 </View>
@@ -273,8 +220,7 @@ export default function Calc() {
 
         <View style={CalcStyle.keyboardLand}>
             <View style={CalcStyle.buttonsRowLand}>
-                <CalcButton text="sin" onPress={() => trigClick('sin')} />
-                <CalcButton text="%" onPress={() => operButtonClick(CalcOperations.percent, '%')}/>
+                <CalcButton text="%" onPress={() => console.log("Press")}/>
                 <CalcButton text="7" buttonType={CalcButtonTypes.digit} onPress={digitClick} />
                 <CalcButton text="8" buttonType={CalcButtonTypes.digit} onPress={digitClick} />
                 <CalcButton text="9" buttonType={CalcButtonTypes.digit} onPress={digitClick} />
@@ -282,7 +228,6 @@ export default function Calc() {
                 <CalcButton text="C" onPress={clearClick} />
             </View>
             <View style={CalcStyle.buttonsRowLand}>
-                <CalcButton text="cos" onPress={() => trigClick('cos')} />
                 <CalcButton text={"\u00b9/\u2093"} onPress={invClick}/>
                 <CalcButton text="4" buttonType={CalcButtonTypes.digit} onPress={digitClick} />
                 <CalcButton text="5" buttonType={CalcButtonTypes.digit} onPress={digitClick} />
@@ -291,7 +236,6 @@ export default function Calc() {
                 <CalcButton text="CE" onPress={clearEntryClick} />
             </View>
             <View style={CalcStyle.buttonsRowLand}>
-                <CalcButton text="tan" onPress={() => trigClick('tan')} />
                 <CalcButton text={"x\u00b2"} />
                 <CalcButton text="1" buttonType={CalcButtonTypes.digit} onPress={digitClick} />
                 <CalcButton text="2" buttonType={CalcButtonTypes.digit} onPress={digitClick} />
@@ -300,7 +244,6 @@ export default function Calc() {
                 <CalcButton text={"\u232B"} onPress={backspaceClick}/>
             </View>
             <View style={CalcStyle.buttonsRowLand}>
-                <CalcButton text="ctg" onPress={() => trigClick('ctg')} />
                 <CalcButton text={"\u00B2\u221ax\u0305"} />
                 <CalcButton text={"\u207a\u2215\u208b"} buttonType={CalcButtonTypes.digit} onPress={pmClick} />
                 <CalcButton text="0" buttonType={CalcButtonTypes.digit} onPress={digitClick} />
@@ -310,6 +253,9 @@ export default function Calc() {
             </View>
         </View>
     </View>;
+
+    // Задача: у ландшафтному режимі додати колонку кнопок sinx, cosx, tanx, ctgx
+
 
     return width < height ? PortraitView() : LandscapeView();
 }

@@ -13,7 +13,7 @@ export default function Anim() {
             useNativeDriver: true, 
             duration: 500,
         }).start();
-    };
+    }; 
 
     // хук-референс, що дозволяє не змінювати об'єкт при
     // перезапуску функції
@@ -51,27 +51,139 @@ export default function Anim() {
         }).start();
     };
 
-    // анімація "Рідкого дотику"
-    const liquidValue = useRef(new Animated.Value(1.0)).current;
-    
-    const liquidPress = () => {
+    // Анімації зміщення (translation)
+    const trans1xValue = useRef(new Animated.Value(0.0)).current;
+    const trans1yValue = useRef(new Animated.Value(0.0)).current;
+    const trans1Press = () => {
+        Animated.parallel([
+            Animated.sequence([
+                Animated.timing(trans1xValue, {
+                    toValue: 50.0,
+                    useNativeDriver: true, 
+                    duration: 300,
+                }),
+                Animated.timing(trans1xValue, {
+                    toValue: -50.0,
+                    useNativeDriver: true, 
+                    duration: 600,
+                }),
+                Animated.timing(trans1xValue, {
+                    toValue: 0.0,
+                    useNativeDriver: true, 
+                    duration: 300,
+                }),
+            ]),
+            
+            Animated.sequence([
+                Animated.timing(trans1yValue, {
+                    toValue: 50.0,
+                    useNativeDriver: true, 
+                    duration: 150,
+                }),
+                Animated.timing(trans1yValue, {
+                    toValue: -50.0,
+                    useNativeDriver: true, 
+                    duration: 300,
+                }),            
+                Animated.timing(trans1yValue, {
+                    toValue: 50.0,
+                    useNativeDriver: true, 
+                    duration: 300,
+                }),
+                Animated.timing(trans1yValue, {
+                    toValue: -50.0,
+                    useNativeDriver: true, 
+                    duration: 300,
+                }),
+                Animated.timing(trans1yValue, {
+                    toValue: 0.0,
+                    useNativeDriver: true, 
+                    duration: 150,
+                }),
+            ]),
+        ]).start();        
+    };
+
+    // обертання
+    const rot1Value = useRef(new Animated.Value(0.0)).current;
+    const rot1Press = () => {
         Animated.sequence([
-            Animated.timing(liquidValue, {
-                toValue: 1.5,
-                duration: 200,
+            Animated.timing(rot1Value, {
+                toValue: 45,
                 useNativeDriver: true, 
+                duration: 300,
             }),
-            Animated.timing(liquidValue, {
-                toValue: 0.5,
-                duration: 200,
+            Animated.timing(rot1Value, {
+                toValue: -45,
                 useNativeDriver: true, 
+                duration: 600,
             }),
-            Animated.spring(liquidValue, {
-                toValue: 1.0,
-                friction: 3,
+            Animated.timing(rot1Value, {
+                toValue: 0,
                 useNativeDriver: true, 
+                duration: 300,
             })
         ]).start();
+        
+    }; 
+
+    // подія завершення
+    const fin1Value = useRef(new Animated.Value(1.0)).current;
+    const fin1Press = () => {
+        Animated.timing(fin1Value, {
+            toValue: 1.5,
+            useNativeDriver: true,
+            duration: 900,
+        }).start(       // у функцію старту анімації можна передати
+            () => {     // функцію, що буде виконана після зупинки анімації
+                Animated.timing(fin1Value, {
+                    toValue: 1.0,
+                    useNativeDriver: true,
+                    duration: 0,
+                }).start(fin1Press);
+            }
+        );
+    };
+
+    // Керована нескінченна анімація
+    const infiniteValue = useRef(new Animated.Value(1.0)).current;
+    const isAnimatingRef = useRef(false);
+    const shouldStopRef = useRef(false);
+
+    const infinitePress = () => {
+        if (!isAnimatingRef.current) {
+            // Перший клік - починаємо анімацію
+            isAnimatingRef.current = true;
+            shouldStopRef.current = false;
+            playInfiniteAnimation();
+        } else {
+            // Другий клік - зупиняємо повтори
+            shouldStopRef.current = true;
+        }
+    };
+
+    const playInfiniteAnimation = () => {
+        Animated.sequence([
+            Animated.timing(infiniteValue, {
+                toValue: 1.5,
+                useNativeDriver: true,
+                duration: 400,
+            }),
+            Animated.timing(infiniteValue, {
+                toValue: 1.0,
+                useNativeDriver: true,
+                duration: 400,
+            })
+        ]).start(() => {
+            // Перевіряємо чи потрібно продовжувати
+            if (!shouldStopRef.current) {
+                playInfiniteAnimation();
+            } else {
+                // Зупиняємо анімацію
+                isAnimatingRef.current = false;
+                shouldStopRef.current = false;
+            }
+        });
     };
 
     return <View style={AnimStyle.pageContainer}>
@@ -121,16 +233,70 @@ export default function Anim() {
         </View>
 
         <View style={AnimStyle.row}>            
-            <Pressable style={AnimStyle.anim} onPress={liquidPress}>
+            <Pressable style={AnimStyle.anim} onPress={trans1Press}>
                 <Animated.View style={[
                     AnimStyle.block,
-                    { transform: [{scale: liquidValue}] }
-                    ]}>
-                    <View style={[AnimStyle.demo, {borderRadius: 50, backgroundColor: 'dodgerblue'}]}></View>
-                    <Text style={AnimStyle.subtitle}>Liquid Touch</Text>
+                    { transform: [
+                        {translateX: trans1xValue},
+                        {translateY: trans1yValue},
+                        {scale: trans1xValue.interpolate({
+                            inputRange:  [-50,   0,  50  ],
+                            outputRange: [0.75,  1,  1.33]
+                        })},
+                    ]} 
+                ]}>
+                    <View style={AnimStyle.demo}></View>
+                    <Text style={AnimStyle.subtitle}>Зміщення</Text>
                 </Animated.View>
             </Pressable> 
+
+            <Pressable style={AnimStyle.block} onPress={rot1Press} >
+                <Animated.View style={[
+                    AnimStyle.block,
+                    { transform: [
+                        {rotate: rot1Value.interpolate({
+                            inputRange: [-90, 0, 90],
+                            outputRange: ["-90deg", "0deg", "90deg"]
+                        })},
+                        {translateX: rot1Value.interpolate({
+                            inputRange: [-90, 90],
+                            outputRange: [80, -80]
+                        })}
+                    ]}
+                ]}>
+                    <View style={AnimStyle.demo}></View>
+                    <Text style={AnimStyle.subtitle}>Поворот</Text>
+                </Animated.View>
+            </Pressable>
         </View>
+
+        <View style={AnimStyle.row}>
+            <Pressable style={AnimStyle.anim} onPress={fin1Press}>
+                <Animated.View style={[
+                    AnimStyle.block,
+                    { transform: [
+                        {scale: fin1Value},
+                    ]}
+                ]}>
+                    <View style={AnimStyle.demo}></View>
+                    <Text style={AnimStyle.subtitle}>Завершення</Text>
+                </Animated.View>
+            </Pressable>
+
+            <Pressable style={AnimStyle.anim} onPress={infinitePress}>
+                <Animated.View style={[
+                    AnimStyle.block,
+                    { transform: [
+                        {scale: infiniteValue},
+                    ]}
+                ]}>
+                    <View style={AnimStyle.demo}></View>
+                    <Text style={AnimStyle.subtitle}>Керована нескінченна</Text>
+                </Animated.View>
+            </Pressable>
+
+        </View>
+
     </View>;
 };
 
@@ -157,4 +323,10 @@ func Anim() {
 
     <Animated.View {opacity: fadeOutValue}>...
 }
+
+Д.З. Реалізувати керовану нескінченну анімацію:
+перший клік (тап) по об'єкту запускає анімацію, вона продовжується 
+ без формальних обмежень по кількості повторів (нескінченна)
+другий клік зупиняє анімацію, точніше зупиняє повтори, 
+ тобто анімація дограє до вихідного положення і далі не повторюється 
 */

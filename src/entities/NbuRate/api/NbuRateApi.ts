@@ -11,15 +11,6 @@ export default class NbuRateApi {
             .then(resolve)
             .catch(reject);
         });
-    }
-    
-    static getRates(date: Date):Promise<Array<INbuRate>> {
-        return new Promise((resolve, reject) => {
-            fetch(`https://bank.gov.ua/NBUStatService/v1/statdirectory/exchange?date=${date.toYMD()}&json`)
-            .then(r => r.json())
-            .then(resolve)
-            .catch(reject);
-        });
-    }
+    } 
 
 };

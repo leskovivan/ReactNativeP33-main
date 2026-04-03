@@ -13,16 +13,12 @@ export default function Rate() {
     const [search, setSearch] = useState<string>("");
 
     useEffect(() => {
-        NbuRateApi.getRates(date).then(setRates);
-    }, [date]);
+        NbuRateApi.getCurrentRates().then(setRates);
+    }, []);
 
     useEffect(() => {
         if(search.length > 0) {
-            const searchLower = search.toLowerCase();
-            setShownRates(rates.filter((r) => 
-                r.cc.toLowerCase().includes(searchLower) || 
-                r.txt.toLowerCase().includes(searchLower)
-            ));
+            setShownRates(rates.filter(r => r.cc.includes(search)));
         }
         else {
             setShownRates(rates);

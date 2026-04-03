@@ -17,3 +17,42 @@ https://developer.android.com/studio
 
 Попередні налаштування:
 включена віртуалізація у BIOS
+
+--------------------------
+
+Підписування та збірка (release)
+1) генеруємо ключ-підпис 
+keytool -genkey -v -keystore dev_key.keystore -alias dev_key_alias -keyalg RSA -keysize 2048 -validity 10000
+
+&"C:\Program Files\Java\jdk-17\bin\keytool" ...
+
+2) переміщуємо згенерований ключ (файл dev_key.keystore) до директорії android/app 
+
+3) вносимо дані до налаштувань збиральника  android\app\build.gradle
+(ReactNativeP33 - пароль при створенні ключа)
+...
+android{
+    ...
+    signingConfigs{
+        ...
+        release {
+            storeFile file('dev_key.keystore')
+            storePassword 'ReactNativeP33'
+            keyAlias 'dev_key_alias'
+            keyPassword 'ReactNativeP33'
+        }
+    }
+    ...
+    buildTypes {
+        ...
+        release {
+            ...
+            signingConfig signingConfigs.release   <-- додати або змінити з .debug
+        }
+}
+
+4) запускаємо збірку:
+переходимо до ./android
+gradlew assembleRelease   або    ./gradlew assembleRelease
+
+5) знаходимо результат у android/app/build/outputs/apk/app-release.apk
